@@ -1,21 +1,12 @@
 
-* Apply Value Labels
-
+// Apply Value Labels
 
 // Rename Vars to match codebook
-
 rename st* a_1st* 
 rename nd* a_2nd*
 
-
 // Define value labels
-
-// Value label definitions have been folded
-
-// Click to expand
-
 qui {
-
 	// Vehicles Vars
 	label define journey_purpose_of_driver -1 `"NULL or Invalid value"', modify
 	label define journey_purpose_of_driver 1 `"Journey as part of work"', modify
@@ -28,10 +19,6 @@ qui {
 	label define was_vehicle_left_hand_drive -1 `"NULL or Invalid value"', modify
 	label define was_vehicle_left_hand_drive 1 `"No"', modify
 	label define was_vehicle_left_hand_drive 2 `"Yes"', modify
-	label define hit_and_run -1 `"NULL or Invalid value"', modify
-	label define hit_and_run 0 `"Other"', modify
-	label define hit_and_run 1 `"Hit and run"', modify
-	label define hit_and_run 2 `"Non-stop vehicle not hit"', modify
 	label define age_of_driver -1 `"NULL or Invalid value"', modify
 	label define sex_of_driver 1 `"Male"', modify
 	label define sex_of_driver 2 `"Female"', modify
@@ -95,38 +82,6 @@ qui {
 	label define junction_location 6 `"Entering main road"', modify
 	label define junction_location 7 `"Entering from slip road"', modify
 	label define junction_location 8 `"Mid Junction - on roundabout or on main road"', modify
-	label define vehicle_restricted_lane -1 `"NULL or Invalid value"', modify
-	label define vehicle_restricted_lane 0 `"On main c'way - not in restricted lane (from 1999)"', modify
-	label define vehicle_restricted_lane 1 `"Tram/Light rail track (from 1999)"', modify
-	label define vehicle_restricted_lane 2 `"Bus lane (from 1999)"', modify
-	label define vehicle_restricted_lane 3 `"Busway (including guided busway) (from 1999)"', modify
-	label define vehicle_restricted_lane 4 `"Cycle lane (on main carriageway) (from 1999)"', modify
-	label define vehicle_restricted_lane 5 `"Cycleway or shared use footway"', modify
-	label define vehicle_restricted_lane 6 `"On lay-by or hard shoulder"', modify
-	label define vehicle_restricted_lane 7 `"Entering lay-by or hard shoulder"', modify
-	label define vehicle_restricted_lane 8 `"Leaving lay-by or hard shoulder"', modify
-	label define vehicle_restricted_lane 9 `"Footway (pavement) (from 1999)"', modify
-	label define vehicle_restricted_lane 10 `"Not on carriageway (1979-1998)"', modify
-	label define compass_point_to -1 `"NULL or Invalid value"', modify
-	label define compass_point_to 0 `"Parked"', modify
-	label define compass_point_to 1 `"N"', modify
-	label define compass_point_to 2 `"NE"', modify
-	label define compass_point_to 3 `"E"', modify
-	label define compass_point_to 4 `"SE"', modify
-	label define compass_point_to 5 `"S"', modify
-	label define compass_point_to 6 `"SW"', modify
-	label define compass_point_to 7 `"W"', modify
-	label define compass_point_to 8 `"NW"', modify
-	label define compass_point_from -1 `"NULL or Invalid value"', modify
-	label define compass_point_from 0 `"Parked"', modify
-	label define compass_point_from 1 `"N"', modify
-	label define compass_point_from 2 `"NE"', modify
-	label define compass_point_from 3 `"E"', modify
-	label define compass_point_from 4 `"SE"', modify
-	label define compass_point_from 5 `"S"', modify
-	label define compass_point_from 6 `"SW"', modify
-	label define compass_point_from 7 `"W"', modify
-	label define compass_point_from 8 `"NW"', modify
 	label define vehicle_manoeuvre -1 `"NULL or Invalid value"', modify
 	label define vehicle_manoeuvre 1 `"Reversing"', modify
 	label define vehicle_manoeuvre 2 `"Parked"', modify
@@ -199,18 +154,6 @@ qui {
 	label define car_passenger 0 `"Not car passenger"', modify
 	label define car_passenger 1 `"Front seat passenger"', modify
 	label define car_passenger 2 `"Rear seat passenger"', modify
-	label define pedestrian_direction -1 `"NULL or Invalid value"', modify
-	label define pedestrian_direction 0 `"Not a pedestrian"', modify
-	label define pedestrian_direction 1 `"Heading north"', modify
-	label define pedestrian_direction 2 `"Heading north east"', modify
-	label define pedestrian_direction 3 `"Heading east"', modify
-	label define pedestrian_direction 4 `"Heading south east"', modify
-	label define pedestrian_direction 5 `"Heading south"', modify
-	label define pedestrian_direction 6 `"Heading south west"', modify
-	label define pedestrian_direction 7 `"Heading west"', modify
-	label define pedestrian_direction 8 `"Heading north west"', modify
-	label define pedestrian_direction 9 `"Unknown (from 1999)"', modify
-	label define pedestrian_direction 10 `"Standing still"', modify
 	label define pedestrian_movement -1 `"NULL or Invalid value"', modify
 	label define pedestrian_movement 0 `"Not a pedestrian"', modify
 	label define pedestrian_movement 1 `"Crossing from driver's nearside"', modify
@@ -289,15 +232,12 @@ qui {
 	label define light_conditions 5 `"Darkness - lights unlit"', modify
 	label define light_conditions 6 `"Darkness - no lighting"', modify
 	label define light_conditions 7 `"Darkness - lighting unknown"', modify
-	label define ped_crossingphysical_faci 0 `"No physical crossing facilities within 50 metres"', modify
-	label define ped_crossingphysical_faci 1 `"Zebra"', modify
-	label define ped_crossingphysical_faci 4 `"Pelican, puffin, toucan or similar non-junction pedestrian light crossing"', modify
-	label define ped_crossingphysical_faci 5 `"Pedestrian phase at traffic signal junction"', modify
-	label define ped_crossingphysical_faci 7 `"Footbridge or subway"', modify
-	label define ped_crossingphysical_faci 8 `"Central refuge"', modify
-	label define ped_crossinghuman_control 0 `"None within 50 metres"', modify
-	label define ped_crossinghuman_control 1 `"Control by school crossing patrol"', modify
-	label define ped_crossinghuman_control 2 `"Control by other authorised person"', modify
+	label define pedestrian_crossingphysical_faci 0 `"No physical crossing facilities within 50 metres"', modify
+	label define pedestrian_crossingphysical_faci 1 `"Zebra"', modify
+	label define pedestrian_crossingphysical_faci 4 `"Pelican, puffin, toucan or similar non-junction pedestrian light crossing"', modify
+	label define pedestrian_crossingphysical_faci 5 `"Pedestrian phase at traffic signal junction"', modify
+	label define pedestrian_crossingphysical_faci 7 `"Footbridge or subway"', modify
+	label define pedestrian_crossingphysical_faci 8 `"Central refuge"', modify
 	label define a_2nd_road_number -1 `"NULL or Invalid value"', modify
 	label define a_2nd_road_class -1 `"NULL or Invalid value"', modify
 	label define a_2nd_road_class 1 `"Motorway"', modify
@@ -767,8 +707,6 @@ qui {
 	label define local_authority_district 939 `"Stirling"', modify
 	label define local_authority_district 940 `"West Lothian"', modify
 	label define local_authority_district 941 `"Western Isles (Eilean Siar)"', modify
-	label define minute_of_accident -1 `"NULL or Invalid value"', modify
-	label define hour_of_accident -1 `"NULL or Invalid value"', modify
 	label define day_of_week 1 `"Sunday"', modify
 	label define day_of_week 2 `"Monday"', modify
 	label define day_of_week 3 `"Tuesday"', modify
@@ -885,35 +823,14 @@ qui {
 	label define propulsion_code	8	"Hybrid electric" , modify
 	label define propulsion_code	9	"Fuel cells" , modify
 	label define propulsion_code	10	"New fuel technology" , modify
-
-
-	
-	// Var notes
-	#delimit
-	
-	note pedestrian_movement :
-	A. If the casualty was not a pedestrian, leave this box blank.
-	B. In codes 1 - 4 'driver' means driver of vehicle which injured the pedestrian. Where a pedestrian was struck by more than one vehicle, this should be the driver of the first vehicle.
-	C. In codes 5 and 6, include person lying in the carriageway, (eg. drunk) and people who were not moving in any clearly defined manner immediately prior to the accident.
-	D. Where 3.10 (Pedestrian Location) is coded 06 'On footway or verge', or where the pedestrian is not in the carriageway, 3.11 should be coded 9 'Unknown or other'.
-	E. If 3.11 is left blank, then 3.6 (Casualty Class) must be coded 1 or 2.
-	F. If 3.11 is coded 1 - 4, then 3.10 (Pedestrian Location) should not be coded 06 or 09.
-	G. If 3.11 is coded 5 - 8, then 3.10 should not be coded 01 - 05. ;
-		
-	#delimit cr
-	
-	
 }
 
 // Assign Value labels to variables
-
 label dir
-
 local labnames = r(names)
 
+// Value label names not matched show in red
 foreach x in `labnames' {
-
-	capture noisily label value `x' `x' // value label names not matched show in red
-		
-	}
+	capture noisily label value `x' `x' 
+}
 	

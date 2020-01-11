@@ -1,7 +1,6 @@
 
 // Model Definitions
 
-
 global aam1c "i.speed urban vtaxi i.driver_age driver_fatal_per daylight weekday weekend_night i.weather i.season i.year"
 global sam1c "urban daylight weekday weekend_night driver_fatal_per vtaxi i.driver_age i.weather i.season i.year"
 

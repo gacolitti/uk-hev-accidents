@@ -21,6 +21,11 @@ local dest "data/road-safety"
 capture noisily mkdir "`dest'"
 shell /usr/local/bin/wget -r -l1 -H -t1 -nd -N -np -A.zip -erobots=off `toget' -P `dest' --no-check-certificate
 
+// Get 2018 data
+shell /usr/local/bin/wget -r -l1 -H -t1 -nd -N -np -A.csv -erobots=off `toget' -P `dest' --no-check-certificate
+
+// local dest "data/road-safety"
+
 cd "`dest'"
 local files : dir . files "*.zip"
 foreach file of local files {
@@ -30,10 +35,10 @@ foreach file of local files {
 		cd "2017" 
 		unzipfile "../`file'"
 		shell /usr/local/bin/rename -f 'y/A-Z/a-z/' *
-		shell /usr/local/bin/rename 's/cas/casualties_2017/' cas.csv
-		shell /usr/local/bin/rename 's/veh/vehicles_2017/' veh.csv
-		shell /usr/local/bin/rename 's/acc/accidents_2017/' acc.csv
-		shell /usr/local/bin/rename 's/dftroadsafety_//' *
+		shell /usr/local/bin/rename -f 's/cas/casualties-2017/' cas.csv
+		shell /usr/local/bin/rename -f 's/veh/vehicles-2017/' veh.csv
+		shell /usr/local/bin/rename -f 's/acc/accidents-2017/' acc.csv
+		shell /usr/local/bin/rename -f 's/dftroadsafety_//' *
 		cd "../"
 	} 
 	else if strmatch("`file'", "*2016*") {
@@ -41,10 +46,10 @@ foreach file of local files {
 		cd "2016"
 		unzipfile "../`file'"
 		shell /usr/local/bin/rename -f 'y/A-Z/a-z/' *
-		shell /usr/local/bin/rename 's/cas/casualties_2016/' cas.csv
-		shell /usr/local/bin/rename 's/veh/vehicles_2016/' veh.csv
-		shell /usr/local/bin/rename 's/acc/accidents_2016/' acc.csv
-		shell /usr/local/bin/rename 's/dftroadsafety_//' *
+		shell /usr/local/bin/rename -f 's/cas/casualties-2016/' cas.csv
+		shell /usr/local/bin/rename -f 's/veh/vehicles-2016/' veh.csv
+		shell /usr/local/bin/rename -f 's/acc/accidents-2016/' acc.csv
+		shell /usr/local/bin/rename -f 's/dftroadsafety_//' *
 		cd "../"
 	}
 	else {
@@ -53,16 +58,19 @@ foreach file of local files {
 	rm "`file'"
 }
 
-shell /usr/local/bin/rename -f 'y/A-Z/a-z/' *
-shell /usr/local/bin/rename 's/dftroadsafety_//' *
-
 shell ditto 2016 .
 shell ditto 2017 .
-
 shell rm -R 2016
 shell rm -R 2017
 
-local files : dir . files "bloodalcoholcontent_coronersdata*"
+shell /usr/local/bin/rename -f 'y/A-Z/a-z/' *
+shell /usr/local/bin/rename -f 's/dftroadsafety_//' *
+shell /usr/local/bin/rename -f 's/dftroadsafetydata_//' *
+shell /usr/local/bin/rename -f 's/([a-z])([0-9])/$1-$2/g' *
+shell /usr/local/bin/rename -f 's/_/-/g' *
+shell /usr/local/bin/rename -f 's/casualty/casualties/' *
+
+local files : dir . files "bloodalcoholcontent-coronersdata*"
 foreach file of local files {
 	rm "`file'"
 }
@@ -72,8 +80,15 @@ foreach file of local files {
 	rm "`file'"
 }
 
-rm "final dft casualty dashboard (2011 to 2015).xlsm"
-rm "q2_road_safety_data_2018_datagov.csv"
+rm "final dft casualties dashboard (2011 to 2015).xlsm"
+
+// Remove unneeded year files 2009-2014 
+local files : dir . files "*"
+foreach file of local files {
+	if regexm("`file'", "2009|2010|2011|2012|2013|2014") {
+		rm "`file'"
+	}
+}
 
 cd "$master_dir"
 

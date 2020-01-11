@@ -1,10 +1,5 @@
 
-****************************************************************************************************
-
-
-* Gen Vars
-
-****************************************************************************************************
+// Gen Vars
 
 // Tab gen cat vars
 qui {
@@ -123,15 +118,14 @@ foreach x in special_conditions_at_site carriageway_hazards ped_crossinghuman_co
 	rename road_type4 single_carriageway
 	rename road_type5 slippery_road
 	rename road_type6 roadtype_unknown
-	
 }
 
-// Remove 'varname==' after tabulate
+// Remove 'varname ==' after tabulate
 labnoeq *
 
 // Gen unique vehicle ID
-egen vehid = group(acc_index vehicle_reference)
-label var vehid "Unique vehicle ID"
+egen key = group(acc_index vehicle_reference)
+label var key "Unique ID"
 
 // Gen speed limit
 gen speed_low = (speed_limit <=30 ) if !mi(speed_limit)
@@ -141,162 +135,116 @@ label var speed_med "Medium Speed (31-50 mph)"
 gen speed_high = (speed_limit > 50) if !mi(speed_limit)
 label var speed_high "High Speed (51+ mph)"
 
-egen speed = group( speed_high speed_med speed_low)
-label var speed "Posted speed limit"
-label define speed 1 "Low Speed" 2 "Medium Speed" 3 "High Speed"
-label val speed speed
-
 // Gen vehicle age
-gen old_veh = (age_of_vehicle >= 10) if !mi(age_of_vehicle)
-label var old_veh "Old vehicle (10+)"
-gen med_veh = (age_of_vehicle > 2 & age_of_vehicle < 10) if !mi(age_of_vehicle)
-label var med_veh "Mid-age vehicle (3-9)"
-gen new_veh = (age_of_vehicle <= 2) if !mi(age_of_vehicle)
-label var new_veh "New vehicle (0-2)"
+gen old_vehicle = (age_of_vehicle >= 10) if !mi(age_of_vehicle)
+label var old_vehicle "Old vehicle (10+)"
+gen mid_age_vehicle = (age_of_vehicle > 2 & age_of_vehicle < 10) if !mi(age_of_vehicle)
+label var mid_age_vehicle "Mid-age vehicle (3-9)"
+gen new_vehicle = (age_of_vehicle <= 2) if !mi(age_of_vehicle)
+label var new_vehicle "New vehicle (0-2)"
 
-egen vehicle_age = group(old_veh med_veh new_veh)
-label var vehicle_age "Vehicle age (years)"
-label define vehicle_age 3 "Old vehicle" 2 "Mid-age vehicle" 1 "New vehicle"
-label val vehicle_age vehicle_age
+// Gen hybrid/electric
+gen hybrid_electric = (propulsion_code == 3 | propulsion_code == 8) if !mi(propulsion_code) 
+label var hybrid_electric "Hybrid/Electric"
+label define hybrid_electric 1 "Hybrid/Electric"
+label val hybrid_electric hybrid_electric
 
-// Gen HEV
-gen hyb_elec = (propulsion_code == 3 | propulsion_code == 8) if !mi(propulsion_code) 
-label var hyb_elec "HEV"
-label define hyb_elec 1 "HEV"
-label val hyb_elec hyb_elec
-
-// Gen interaction variables
-gen hybelec_urban = hyb_elec * urban if !mi(hyb_elec) & !mi(urban)
-label var hybelec_urban "HEV*Urban"
-gen hybelec_speedlow = hyb_elec * speed_low if !mi(hyb_elec) & !mi(speed_low)
-label var hybelec_speedlow "HEV*Low Speed"
-
-// Gen casualty by injury severity
-gen driver_slight = (driver ==1 & driver_casualty_severity == 3)
-label var driver_slight "Driver slight injury"
-gen driver_severe = (driver ==1 & driver_casualty_severity ==2)
-label var driver_severe "Driver severe injury"
-gen driver_fatal = (driver ==1 & driver_casualty_severity ==1)
-label var driver_fatal "Driver fatal injury"
+// Gen outcome by injury severity
+gen driver_slight_injury = (driver == 1 & driver_injury_severity == 3)
+label var driver_slight_injury "Driver slight injury"
+gen driver_severe_injury = (driver == 1 & driver_injury_severity == 2)
+label var driver_severe_injury "Driver severe injury"
+gen driver_fatal_injury = (driver == 1 & driver_injury_severity == 1)
+label var driver_fatal_injury "Driver fatal injury"
 
 // Gen new pedestrian based on injury severity
+gen pedestrian_slight_injury = (pedestrian == 1 & pedestrian_injury_severity == 3)
+label var pedestrian_slight_injury "Pedestrian slight injury"
 
-gen ped_slight = (pedestrian ==1 & ped_casualty_severity == 3)
-label var ped_slight "Pedestrian slight injury"
+gen pedestrian_severe_injury = (pedestrian == 1 & pedestrian_injury_severity == 2)
+label var pedestrian_severe_injury "Pedestrian severe injury"
 
-gen ped_severe = (pedestrian ==1 & ped_casualty_severity ==2)
-label var ped_severe "Pedestrian severe injury"
-
-gen ped_fatal = (pedestrian ==1 & ped_casualty_severity ==1)
-label var ped_fatal "Pedestrian fatal injury"
+gen pedestrian_fatal_injury = (pedestrian == 1 & pedestrian_injury_severity == 1)
+label var pedestrian_fatal_injury "Pedestrian fatal injury"
 
 // Gen new cyclist based on injury severity
+gen cyclist_slight_injury = (cyclist == 1 & cyclist_injury_severity == 3)
+label var cyclist_slight_injury "Cyclist slight injury"
 
-gen cyc_slight = (cyclist ==1 & cyc_casualty_severity ==3)
-label var cyc_slight "Cyclist slight injury"
+gen cyclist_severe_injury = (cyclist == 1 & cyclist_injury_severity == 2)
+label var cyclist_severe_injury "Cyclist severe injury"
 
-gen cyc_severe = (cyclist ==1 & cyc_casualty_severity ==2)
-label var cyc_severe "Cyclist severe injury"
-
-gen cyc_fatal = (cyclist ==1 & cyc_casualty_severity ==1)
-label var cyc_fatal "Cyclist fatal injury"
+gen cyclist_fatal_injury = (cyclist == 1 & cyclist_injury_severity == 1)
+label var cyclist_fatal_injury "Cyclist fatal injury"
 
 // Gen Season variables
-gen winter = (month == 12 | month == 1 | month == 2)
+gen winter = (month == 12 | month == 1 | month == 2) if !mi(month)
 label var winter "Winter"
-gen spring = (month == 3 | month == 4 | month == 5)
+gen spring = (month == 3 | month == 4 | month == 5) if !mi(month)
 label var spring "Spring"
-gen summer = (month == 6 | month == 7 | month == 8)
+gen summer = (month == 6 | month == 7 | month == 8) if !mi(month)
 label var summer "Summer"
-gen fall = (month == 9 | month == 10 | month == 11)
+gen fall = (month == 9 | month == 10 | month == 11) if !mi(month)
 label var fall "Fall"
 
-egen season = group(fall summer spring winter)
-label var season "Season"
-label define season 1 "Winter" 2 "Spring" 3 "Summer" 4 "Fall"
-label value season season
-
-
 // Combine Severe & Fatal
-gen ped_sf = (ped_severe ==1 | ped_fatal ==1) 
-label var ped_sf "Pedestrian severe/fatal injury"
-
-gen cyc_sf = (cyc_severe ==1 | cyc_fatal ==1)
-label var cyc_sf "Cyclist severe/fatal injury"
+gen pedestrian_severe_or_fatal_injury = (pedestrian_severe_injury == 1 | pedestrian_fatal_injury == 1) 
+label var pedestrian_severe_or_fatal_injury "Pedestrian severe/fatal injury"
+gen cyclist_severe_or_fatal_injury = (cyclist_severe_injury == 1 | cyclist_fatal_injury == 1)
+label var cyclist_severe_or_fatal_injury "Cyclist severe/fatal injury"
 
 // Gen taxi
-gen vtaxi = (vtaxi05_16 == 1 | vtaxinotprivate79_04 == 1) if !mi(vtaxinotprivate79_04) & !mi(vtaxi05_16)
-label var vtaxi "Taxi"
+gen taxi = (vtaxi05_16 == 1 | vtaxinotprivate79_04 == 1) if !mi(vtaxinotprivate79_04) & !mi(vtaxi05_16)
+label var taxi "Is vehicle a taxi"
+label define taxi 1 "Taxi" 0 "Not Taxi"
+label val taxi taxi
 
 // Gen Old & Young Diver Bins
-gen old_driver = (age_band_of_driver >= 10) if !mi(age_band_of_driver)  // Drivers age 66 & older
+// Drivers aged 66+
+gen old_driver = (age_band_of_driver >= 10) if !mi(age_band_of_driver) 
 label var old_driver "Old driver (66+)"
-
-gen med_driver = (age_band_of_driver > 6 & age_band_of_driver < 10) if !mi(age_band_of_driver) // Drivers age 36-65 
-label var med_driver "Mid-age driver (36-65)"
-
-gen young_driver = (age_band_of_driver <= 6) if !mi(age_band_of_driver)  // Drivers age 35 & younger
+// Drivers aged 36-65
+gen mid_age_driver = (age_band_of_driver > 6 & age_band_of_driver < 10) if !mi(age_band_of_driver) 
+label var mid_age_driver "Mid-age driver (36-65)"
+// Drivers age 35 & younger
+gen young_driver = (age_band_of_driver <= 6) if !mi(age_band_of_driver)
 label var young_driver "Young driver (0-35)"
 
-egen driver_age = group(old_driver med_driver young_driver)
-label var driver_age "Driver's age"
-label define driver_age 1 "Young driver" 2 "Mid-age driver" 3 "Old driver"
-label val driver_age driver_age
-
-// Simplify weather
+// Gen weather vars
 gen rain = (rain_no_wind == 1 | rain_high_wind == 1) if !mi(rain_no_wind)
 label var rain "Rain"
-
-gen norain = (rain != 1)
-label var norain "No rain"
-
 gen snow  = (snow_no_wind == 1 | snow_high_wind == 1) if !mi(snow_no_wind)
 label var snow "Snow"
 
-gen weather = .
-replace weather = 1 if weather_other == 1
-replace weather = 2 if rain == 1
-replace weather = 3 if snow == 1
-replace weather = 4 if fog == 1
-replace weather = 5 if  weather_fine == 1 | fine_high_wind == 1 
-label define weather 1 "Other weather" 2 "Rain" 3 "Snow" 4 "Fog" 5 "Fine Weather"
-label value weather weather
-label var weather "Weather"
-
 // Gen Weekday, Weekend, & Weekend night indicators
 gen weekday = (monday == 1 | tuesday == 1 | wednesday == 1 | thursday == 1 | friday == 1)
-label var weekday "Weekday (M-F)"
-
+label var weekday "Weekday (Mo-Fr)"
 gen weekend = (friday == 1 | saturday == 1)
-label var weekend "Weekend (Sat. or Sun.)"
-
+label var weekend "Weekend (Fr/Sa)"
 gen weekend_night = (friday == 1 & daylight != 1 | saturday == 1 & daylight != 1)
-label var weekend_night "Weekend Night (Fri. or Sat.)"
+label var weekend_night "Weekend Night (Fr/Sa)"
 
 // Gen hybrid & electric
-gen hyb = (propulsion_code == 8) if !mi(hyb_elec)
-label var hyb "Hybrid"
-label define hyb 1 "Hybrid" 0 "Not Hybrid"
-label val hyb hyb
+gen hybrid = (propulsion_code == 8) if !mi(hybrid_electric)
+label var hybrid "Hybrid"
+label define hybrid 1 "Hybrid" 0 "Not Hybrid"
+label val hybrid hybrid
 
-gen elec = (propulsion_code == 3) if !mi(hyb_elec)
-label var elec "Electric"
-label define elec 1 "Electric" 0 "Not Electric"
-label val elec elec
+gen electric = (propulsion_code == 3) if !mi(hybrid_electric)
+label var electric "Electric"
+label define electric 1 "Electric" 0 "Not Electric"
+label val electric electric
 
-// Gen number of driver accidents by month by area
-bysort local_authority_district month : egen driver_total = total(driver)
-label var driver_total "Driver injuries by month and authority district"
+// Gen number of driver injuries by month & area
+bysort local_authority_district month : egen driver_injuries_by_month_and_district = total(driver)
+label var driver_injuries_by_month_and_district "Driver injuries by month and authority district"
 
-bysort local_authority_district month : egen driver_fatal_total = total(driver_fatal)
-label var driver_fatal_total "Driver fatalities by month and authority district"
+bysort local_authority_district month : egen driver_fatalities_by_month_and_district = total(driver_fatal_injury)
+label var driver_fatalities_by_month_and_district "Driver fatalities by month and authority district"
 
-gen driver_fatal_per = (driver_fatal_total/driver_total)*100
-label var driver_fatal_per "Driver fatal injury (%)"
+gen driver_fatal_injury_per = (driver_fatalities_by_month_and_district / driver_injuries_by_month_and_district) * 100
+label var driver_fatal_injury_per "Driver fatal injury (%)"
 
 // Keep only not missing
-gen notmissing = !missing(driver_age, hyb_elec, weather, speed, daylight, season, urban, vtaxi)
-
-keep if notmissing
-
+// keep if !missing(driver_age, hyb_elec, weather, speed, daylight, season, urban, vtaxi)
 

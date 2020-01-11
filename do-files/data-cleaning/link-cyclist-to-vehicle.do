@@ -1,10 +1,5 @@
 
-
-****************************************************************************************************
-
-* Link Cyclist to Vehicle
-
-****************************************************************************************************
+//* Link Cyclist to Vehicle
 
 /* 
 
@@ -15,94 +10,36 @@ to know which type of vehicle (HEV or ICE) hit the cyclist. For accidents with o
 to the correct vehicle before estimating a model. 
 
 */
-		
-// Create accident level cyclist variable ( = 1 if accident involved cyclist casualty)
-// anycyclist var is equal to 1 if cyclist is equal to 1 for any vehicle involved in a particular accident
-// Cyclists are considered vehicles here still
-
-egen anycyclist = max(cyclist), by(acc_index) 
-
-// Set casualty vars equal to 0 if missing & invovled in cyclist crash
-// When number_of_vehicles > 2 we don't know which car hit the cyclist
-
-foreach x in driver passenger pedestrian pedestrian_dup cyclist motocyc50 motocyc125 motocyc125p motocyc500p taxi occupant1 minibus1 bus jockey agvehocc tramocc goodsveh1 goodsveh2 goodsveh3 mobilscoot elecmotocyc othervehocc othermotocyc othergoodsveh motocycscootpass motocycriderpass motocyccomb motocyc125p_riderpass taxinotprivate occupant2 minibus2 goodsvehocc {
-
-	replace `x' = 0 if anycyclist == 1 & `x' == . & number_of_vehicles == 2
-
-	}
-
-// Gen dummy for vehilces with no casualties
-// This code must come after replacing missing casualty vars (including driver) to 0 for obs involved in cyclist accident and only two vehicles
-// This code must come before replacing casualty vars to 0 instead of missing for vehicles with no casualties (damage-only vehicles)
-
-gen damageonly = (driver == .) 
-label var damageonly "Vehicle involved in personal injury accident that did not cause or suffer any injuries (casualties)"
-
-// Replace casualty vars to 0 instead of missing for vehicles with no casualties (damage-only vehicles)
-// Damage-only vehicles are vehicles involved in personal-injury accident but didn't cause or suffer injuries
-
-foreach x in driver passenger pedestrian pedestrian_dup cyclist motocyc50 motocyc125 motocyc125p motocyc500p taxi occupant1 minibus1 bus jockey agvehocc tramocc goodsveh1 goodsveh2 goodsveh3 mobilscoot elecmotocyc othervehocc othermotocyc othergoodsveh motocycscootpass motocycriderpass motocyccomb motocyc125p_riderpass taxinotprivate occupant2 minibus2 goodsvehocc {
-
-	replace `x' = 0 if damageonly == 1 
-
-	}
-
-
-****************************************************************************************************
 
 // Reassign cyclist casualty to vehicles that hit them
+foreach x in cyclist cyc_slight_injury cyc_sf_injury {
+	egen `x'_max = max(`x'), by(accident_index)
+	replace `x' = `x'_max if `x'_max > 0 & number_of_vehicles == 2
+}
 
-replace cyclist = anycyclist if anycyclist == 1 & number_of_vehicles == 2
+// Number of cyclist injuries matched to a vehicle
+count if number_of_vehicles == 2 & vehicle_type == 1 & driver_slight_injury != .
+note: `: di %9.0fc `r(N)'' cyclist matched to vehicle that hit them.
 
-// Gen accident level cyclist injury severity 
+// Number of cyclist injuries not matched to a vehicle
+count if number_of_vehicles != 2 & vehicle_type == 1 & driver_slight_injury != .
+note: `: di %9.0fc `r(N)'' cyclist not matched to vehicle that hit them and dropped.
 
-egen any_cyc_casualty_severity1 = min(cyc_casualty_severity) , by(acc_index)
+foreach x in cyclist driver pedestrian passenger driver_slight_injury driver_sf_injury /// 
+pssngr_slight_injury pssngr_sf_injury ///
+ped_slight_injury ped_sf_injury {
+	replace `x' = 0 if cyc_slight_injury_max > 0 & `x' == . & number_of_vehicles == 2
+	replace `x' = 0 if cyc_sf_injury_max > 0 & `x' == . & number_of_vehicles == 2
+}
 
-// Reassign cyclist casualty severity to vehicles that hit them
+// Remove orginal cyclist vehicles
+drop if vehicle_type == 1
 
-replace cyc_casualty_severity = any_cyc_casualty_severity1 if anycyclist == 1 & number_of_vehicles == 2
+count
+local n = `r(N)'
+// Remove damage only vehicles
+drop if driver_slight_injury == .
 
-****************************************************************************************************
-
-// Number cyclist vehicles we COULD match to vehicles
-// vehicle_type = 1 for cyclist vehicles
-count if number_of_vehicles == 2 & vehicle_type == 1 & year > 1999 & damageonly != 1
-local x = r(N)
-
-// Number of total cyclist vehicles 
-count if vehicle_type == 1 & year > 1999 & damageonly != 1
-local y = r(N)
-
-// Percent of cyclist vehicles matched to vehicles
-di `x'/`y'
-local per = `x'/`y'
-
-****************************************************************************************************
-
-// Number cyclist we COULD NOT match to vehicles
-// Number of cyclists involved in cyclist accident where number of vehicles involved is > 2 
-count if number_of_vehicles > 2 & vehicle_type == 1 & year > 1999 & damageonly != 1
-local `x' = r(N)
-
-di `x'/`y'
-
-// Number of cyclists involved in a cycllist-only-accident (only cyclists or ped invovled/injured)
-preserve
-gen cycveh = (vehicle_type ==1)
-
-egen allcyclist = min(cycveh) , by(acc_index) // Equals 1 if all vehicles invovlved in an accident are cyclists
-
-count if allcyclist == 1 & year > 1999 & damageonly != 1
-local x = r(N)
-
-restore
-
-di `x'/`y'
-
-
-****************************************************************************************************
-
-// Drop original obs that treated cylists as vehicles
-drop if vehicle_type == 1 
-
-
+count
+local damageonly = `n' - `r(N)'
+note: `: di %9.0fc `damageonly'' damage-only vehicles dropped.
