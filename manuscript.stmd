@@ -1,0 +1,505 @@
+
+---
+header-includes:
+	- \input{tweaks.tex}
+geometry: "left=2.54cm,right=2.54cm,top=2.3cm,bottom=2.3cm"
+title: Effect of HEVs on Pedestrian and Cyclist Safety
+author: Giovanni Colitti
+abstract: |
+	Not available
+keywords: | 
+	hybrid, electric, pedestrian, cyclist, safety, transport.
+bibliography: bibliography.bib
+---
+
+```{s/}
+qui {
+	global master_dir "~/Documents/stata/uk-hev-accidents"
+	cd "$master_dir"
+	use "data/cleaned-data.dta" , clear
+	sample 100
+	set scheme plotplain
+	
+	distinct accident_index
+	local vehicles_cnt = `r(N)'
+	local accidents_cnt = `r(ndistinct)'
+	
+	sum year
+	local year_min = r(min)
+	local year_max = r(max)
+	
+}
+```
+
+# 1. Introduction
+
+Within the past decade, hybrid and electric vehicles (HEVs) have become increasingly popular 
+around the world. Global HEV car stock surpassed 3 million vehicles in 2017, up from less than 
+0.5 million in 2013 [@IEA2017, Figure 1]. This acceleration in the stock of HEV vehicles is
+fueled in part by world governments’ recognition that emissions from internal combustion
+engine (ICE) vehicles significantly increase atmospheric pollutants, particularly carbon dioxide,
+and that subsidizing the electrification of transport is necessary to reduce these emissions 
+[See: @UnitedNations2015, @IEA2017]. Moreover, technological advancements including
+dramatic reductions in production cost and increases in efficiency of HEV batteries may
+also be contributing to demand [@IEA2018, Figure 5.3]. Still, HEVs only represent a small share
+of the total passenger vehicle market. In 2017, Norway led in HEV adoption with a rate of 29 percent,
+followed by a distant second 6.4 percent in the Netherlands, 3.4 percent in Sweden, 1.5 percent
+in China, France, and the UK, and 0.9 percent in the U.S. [@IEA2017, Figure 14].  
+
+While transport electrification reduces noise and particulate pollution, recent evidence indicates
+that HEVs are also harder for pedestrians and cyclists (P & C) to detect [See: @Mendonca2013; @Wogalter2014]. 
+In addition to road pavement type and vehicle speed, the engine represents a
+main source of noise propagated from vehicles, especially at low speeds. Therefore, HEVs may pose an
+increased risk to P & C safety compared to ICE vehicles by reducing or eliminating noise signals that
+would normally alert P & C to oncoming traffic.
+
+At least two groups have empirically investigated the extent of this problem. In its latest report,
+the National Highway Traffic Safety Administration (NHTSA) used data for 15,328,393 accidents from
+16 U.S. states during the period 2000-2011 to estimate a logistic regression of pedestrian accidents
+on HEVs.1 Net of other covariates including city size, maneuver type, vehicle age, driver age, and
+year, the report found that HEVs significantly increased the odds of hitting a pedestrian by 17.6
+percent (p < 0.05) [@Wu2017]. In a separate analysis, the Transportation Report Laboratory (TRL)
+used data on 782,852 accidents from the UK during the period 2005-2008 and found that, relative to
+the number of registered vehicles, HEVs were 30 percent less likely to be involved in an accident,
+and equally as likely to be involved in an accident with a pedestrian compared to an ICE vehicle [@Morgan2011].
+These relative rates taken together indicate that HEVs result in proportionately more pedestrian
+collisions.
+
+Prior research, therefore, provides some evidence that HEVs increase the risk to pedestrian safety,
+consistent with the hypothesis that quieter electric engines are harder for pedestrians to detect.
+However, the NHTSA report only used data through 2011, and since then, the number of HEVs has
+skyrocketed. Moreover, the TRL report only used data through 2008 and did not control for other
+important covariates such as urbanization, vehicle speed, driving patterns, or time trends.  This
+paper contributes to the above literature by analyzing the most recent data on `s %9.0fc `accidents_cnt'`
+accidents involving `s %9.0fc `vehicles_cnt'` vehicles in the UK during the period 
+`s `year_min'` to `s `year_max'`. Furthermore, the present
+analysis includes more control variables, considers the effect of HEVs on cyclists in addition to
+pedestrians, shows disaggregated electric and hybrid vehicle effects, and investigates the effect
+over time.
+
+Using the most recent data and a logistic regression model, I find that HEVs increase the odds of
+hitting a cyclist by 84% and increase the odds of hitting a pedestrian by 52% in low speed zones
+(LSZ), but there is very little evidence for an effect in high speed or medium speed zones.
+Moreover, while different model specifications produce slightly different magnitudes of the effect
+of HEVs on cyclist and pedestrian injuries, the effect remains consistently positive. The average
+marginal effects (AME) of HEV are also significant and positive for cyclist and pedestrian
+casualties in LSZ. Therefore, estimates presented in this paper concur with prior analyses conducted
+by NHTSA and TRL, yet the magnitude of the effect may be larger than previously thought.  The
+remainder of this paper is organizedas follows. Section 1 discusses the data and reports descriptive
+statistics, section 2 presents results from different models using odds-ratios and marginal effects.
+Section 3 discusses the results. Section 4 provides concluding remarks.
+
+# 2. Data
+
+
+```{s/}
+qui {
+
+local cat_vars "speed_limit vehicle_maneuver road_type weather_conditions season urban daylight weekday weekend weekend_night carriageway_hazards crosswalk special_conditions taxi police_attended_scene"
+tempvar miss
+egen `miss' = rowmiss(hev drvsf_per `cat_vars')
+
+count if hev == .
+local hev_miss_cnt = `r(N)'
+
+count if `miss' == 0
+local complete_obs_cnt = `r(N)'
+
+preserve
+ds, has(type string)
+drop `r(varlist)'
+ds
+local varlist "`r(varlist)'"
+di `r(varlist)'
+tabstat `varlist', stats(mean sum) save
+matrix stats = r(StatTotal)
+
+foreach x in `varlist' {
+	local `x'_avg = stats[1, colnumb(stats, "`x'")]
+	local `x'_per = ``x'_avg' * 100
+	local `x'_cnt = stats[2, colnumb(stats, "`x'")]
+}
+
+restore
+
+tabout year hev if `miss' == 0 using "hev-freq-by-year.tex", replace ///
+c(freq col) f(0c 1) style(tex) ///
+title(Two-way Frequency Between HEV and Year) ///
+twidth(16) ///
+caplab(hev-freq-by-year) ///
+font(bold) ///
+doctype(report)
+
+tabout ps cs psf csf hev if `miss' == 0 using "outcome-freq-by-hev.tex", replace /// 
+c(freq col) f(0c 1) style(tex)  ///
+ title(Two-way Frequency Between HEV and Injury Outcomes) ///
+ twidth(16) ///
+ caplab(outcome-freq-by-hev)  ///
+ font(bold) ///
+ doctype(report)
+ 
+local cat_vars "speed_limit urban daylight weekday weekend weekend_night carriageway_hazards crosswalk special_conditions taxi police_attended_scene vehicle_maneuver road_type weather_conditions season"
+local cont_vars "ulev_per drvsf_per "
+
+// Summary of Control Variables
+ tabout `cat_vars' hev if `miss' == 0 using "summary-of-controls.tex", replace /// 
+ f(0c 1) ///
+ c(freq col) ///
+ style(tex)  ///
+ title(Two-way Frequency Between HEV and Control Variables) ///
+ twidth(16) ///
+ caplab(summary-of-controls)  ///
+ font(bold) ///
+ doctype(report)
+ 
+ tabout hev if `miss' == 0 using "summary-of-continuous-controls.tex", replace /// 
+ f(2) ///
+ sum ///
+ c(mean drvsf_per sd drvsf_per min drvsf_per max drvsf_per mean ulev_per sd ulev_per min ulev_per max ulev_per) ///
+ style(tex)  ///
+ title(Summary of Continuous Control Variables by HEV) ///
+ twidth(16) ///
+ caplab(summary-of-continuous-controls)  ///
+ font(bold) ///
+ doctype(report) ///
+ clab(Mean SD Min Max Mean SD Min Max) h2c(4 4) ///
+ h2(Driver_Severe/Fatal_Injury_(%) Ultra-Low_Emission_Vehicle_(%))
+
+ 
+}
+```
+The data for this study come from the UK Department for Transport STATS19
+reporting system, which includes detailed information on all reported personal injury traffic
+accidents. The data contain information pertinent to the accident including accident severity,
+number of vehicles involved, number of injuries/casualties, speed limit, light and weather
+conditions, vehicle maneuver, and accident location.(footnote) 
+Also included is information on the driver(s)/vehicle(s) involved in
+the accident including variables for vehicle type, vehicle propulsion, and age of driver. Finally,
+information on the person(s) injured/killed in the accident is also present, including variables for
+whether the injury was sustained by a pedestrian, cyclist, driver, or passenger, the sex of the
+injured person(s), their age, and the severity of the injury.  The interaction of injured party
+(pedestrian or cyclist) and injury severity (slight and serious), represent our four outcome
+variables. Data are collapsed by unique “causing” vehicle after omitting vehicles that were
+involved in the accident but did not cause injuries or contain passengers that experienced injuries
+(i.e. damage-only vehicles). Therefore, every vehicle (observation) in the dataset is responsible
+for at least one injury of some degree.(footnote)
+
+Given the structure of the data, for accidents involving two or more vehicles in which a cyclist was
+injured, it is not possible to determine which vehicle is responsible, so these observations are
+dropped. These comprise about `s %03.1f scalar(cyc_nomtch_veh_per)`% of vehicles with cyclist injuries. 
+Only `s %03.1f scalar(mult_ped_per)`% of vehicles that caused pedestrian injuries caused more than one
+ pedestrian injury for the same accident. As such, an
+indicator for whether the injured party was a pedestrian is used rather than a continuous variable
+for the number of pedestrians injured.
+
+HEV is the independent variable of interest
+for most analyses, and is equal to 1 if a vehicle is either hybrid electric or full electric. 
+Table \ref{tab:hev-freq-by-year} lists the frequency of HEVs involved in a personal injury accident
+between `s `year_min'` and `s `year_max'`. 
+
+\input{hev-freq-by-year.tex}
+
+The four interactions of injured party and injury-type represent our outcome variables. 
+Pedestrian slight (PS), pedestrian serious or fatal (PSF), cyclist slight (CS), and cyclist
+serious or fatal (CSF) are indicator variables equal to 1 if an injury was sustained by at least one
+individual belonging to that group (person type/injury type). The two-way frequency of these
+outcome variables and HEV is presented in Table \ref{tab:outcome-freq-by-hev}.
+
+\input{outcome-freq-by-hev.tex}
+
+The remaining variables are used to control for other circumstances surrounding the accident that
+might be correlated with both the outcome variable and HEV. A summary of these control variables is
+presented in Table \ref{summary-of-controls} and Table \ref{summary-of-continuous-controls.tex}. 
+
+\input{summary-of-controls.tex}
+
+Speed limit is the posted speed limit where the accident occurred. (footnote about censored speed
+limit) Vehicle maneuver describes the action of the vehicle; either reversing, parked, waiting to
+go, slowing or stopping, moving off, turning, changing lane,  overtaking vehicle, or going ahead.
+Road type can be either roundabout, dual carriageway, single carriageway, or other.  Weather
+conditions describe the weather during the accident as either fine, raining, snowing, or
+foggy/misty. Spring, Summer, Winter, and Fall are season indicators. Urban is equal to 1 if the
+accident occurred in an urban area. Daylight is equal to 1 if an accident occurred at night.
+Weekday is equal to 1 if the accident occurred on a weekday, weekend is equal to 1 if the accident
+occurred on a Friday or Saturday, and weekend night is equal to 1 if the accident occurred on a
+Friday night or Saturday night. Pedestrian crossing is an indicator for whether there is a
+pedestrian crossing such as a zebra or footbridge within 50 meters from where the accident
+occurred. Pedestrian crossing human control is equal to 1 if there is a school crossing, patrol,
+or other authorized patrol within 50 meters from the accident. Special conditions is equal to 1 if
+there is a special condition at the sight such as a traffic signal malfunction, defective sign, or
+roadwork. Taxi is a dummy equal to 1 if the vehicle is a taxi. Police attended scene is a dummy for
+whether a police officer responded to the accident. Driver severe/fatal injury % is the percent of
+driver accidents that resulted in a severe or fatal injury by district and month, and is included
+to control for unobserved emergency response and safety standards. ULEV % is the percent of
+licensed vehicles that are classified as ultra-low emissions vehicles; Hybrid and electric vehicles
+comprise the vast majority of this category. ULEV % is meant to control for the effect that an
+increased stock of HEV vehicles might have on pedestrian and cyclist awareness of noise signals on
+the road. Moreover, insofar as year dummies are insufficient in capturing the growth in ULEV stock
+because, for example, the growth in ULEV stock varies by district and quarter, ULEV % is a necessary
+control. ULEV % varies by district and quarter, but is only available for years 2010-`s `year_max'`.
+
+\input{summary-of-continuous-controls.tex}
+	
+Of the control variables, perhaps most important are urban and speed limit. HEV accidents are likely
+positively correlated with urban and negatively correlated with speed limit given the range
+limitations of electric (but not hybrid) vehicles, and at the same time urban and lower
+speed limit areas tend to have a denser concentration of P & S. Therefore,
+omitting urban would likely positively bias the coefficient on HEV, and ommiting speed limit would
+likely negatively bias the effect of HEV.(footnote) Furthermore, while HEVs are quieter at low
+speeds compared to ICE vehicles, the noise propagated from HEVs converges to that of a normal ICE
+vehicle as the speed of the vehicle increases and engine noise is dwarfed by wind and road surface
+noise. This suggests that if HEVs pose an increased risk to P & S , the effect
+should depend upon low speed operation (i.e. an interaction effect). 
+
+About (`s %03.1f (1 - (`complete_obs_cnt'/_N)) * 100`%) of observations are missing one or more
+variables used in the analysis. 
+`s %03.1f (`hev_miss_cnt'/_N) * 100`% of vehicles are unidentified in the dataset, and
+thus HEV is missing for these observations. The majority of these missing vehicle observations are
+hit-and-run accidents, which may account for about 11% of the data.(footnote)  The
+remainder are likely mobility scooters, horses, and trams; vehicle
+information is not recorded for these modes of transport. After omitting observations with missing
+values in HEV and the main control variables, there remain `s %9.0fc `complete_obs_cnt'` vehicles in the 
+sample.
+
+P & C constitute only `s %03.1f `ped_cnt'/`complete_obs_cnt'`% and 
+`s %03.1f `cs_cnt'/`complete_obs_cnt'`% of vehicles involved 
+in a personal injury accident, respectively.(footnote) Moreover, the vast majority of these are 
+slight injuries, as opposed to serious injuries.
+
+Over the sample period, only `s %9.0fc `hev_cnt'` vehicles involved in personal injury 
+accidents are either hybrid or electric. This translates to about `s %03.1f (`hev_cnt'/`complete_obs_cnt') * 100`%
+of all vehicles. Of this `s %03.1f 100 * (`hev_cnt'/`complete_obs_cnt')`%, 
+`s %03.1f (`hyb_cnt'/`hev_cnt') * 100`% are hybrid and 
+`s %03.1f 100 * (`elec_cnt'/`hev_cnt')`% are electric vehicles. 
+Moreover, the vast majority of both electric and hybrid vehicles in
+the sample occur towards the end of the sample as the HEV stock has increased exponentially between
+`s `year_min'` to `s `year_max'`. (see Table \ref{hev-freq-by-year}).
+	
+The main takeaways are 1) the vast majority of HEV accidents have occurred in recent years
+coinciding with rapid HEV proliferation and 2) the cooccurrence of HEV and P & C
+injuries is still exceedingly rare, which makes estimation less precise.
+
+
+
+# 2. Results
+
+To quickly summarize the above section: the data used for this analysis includes all reported 
+accidents in which a motor vehicle caused a pedestrian or cyclist injury in the U.K. between the 
+years `s `year_min'` to `s `year_max'`.  Moreover, the analysis is run at the vehicle level after 
+accidents in which only property damage (but not personal injury) was sustained. Therefore, each
+observation represents a unique vehicle with at least one associated injury/casualty outcome of 
+a given degree (slight or serious/fatal) to either a pedestrian or a cyclist.
+
+To investigate the effect of HEVs on cyclist or pedestrian injuries/casualties I estimate the 
+following logistic regression model: 
+
+\begin{equation}\label{eq1}
+p_{outcome} = \frac{1}{1 + e^-(hev \alpha_1 + speed \mathbf{\theta} + hev * speed \mathbf{\delta} + 
+ \mathbf{X \beta} + year \mathbf{\gamma} + \epsilon)}
+\end{equation}
+
+\noindent
+where $p_{outcome}$ is the probability of an injury/casualty outcome; $hev$ is the independent
+vairable of interest equal to 1 when a vehicle is either hybrid or electric and 0 otherwise;
+$speed$ is a vector of 6 dummy variables for the speed limit at the location the 
+accident occured (20-70MPH in intervals of 10MPH);
+$hev*speed$ is a vector of interactions between HEV and speed limit dummies to allow the effect of HEV to be 
+conditional on speed; $X$ is a matrix of variables that control for urbanization, weather
+conditions, unobserved innovations in safety features over time, vehicle maneuver at the time of
+the accident, and other variables that might be correlated with both $hev$ and the outcome.
+(For a full list of the variables included in the model, see Table \ref{summary-of-controls}).
+Lastly, $year$ is a vector of year dummies and $\epsilon$ is a vector of residuals.
+Because vehicles are not independently sampled, standard errors are clustered at the
+accident level. 
+
+
+
+## 2.1 Overall effects of HEV
+
+```{s/}
+qui {
+	set graphics off
+	foreach outcome in ps cs psf csf {
+			logistic `outcome' i.hev##i.speed_limit ///
+			i.weather_conditions ///
+			i.season ///
+			i.road_type ///
+			i.vehicle_maneuver ///
+			i.driver_age ///
+			i.daylight ///
+			i.dry_road ///
+			i.weekday ///
+			i.weekend /// 
+			i.weekend_night ///
+			i.carriageway_hazards ///
+			i.crosswalk ///
+			i.ped_human_control /// 
+			i.special_conditions /// 
+			i.taxi ///
+			i.police_attended_scene ///
+			drvsf_per ///
+			i.year ///
+			, ///
+			vce(cluster accident_index)
+			
+			est store `outcome'_eq1
+			
+			margins, post
+			est store `outcome'_eq1_m
+			mat `outcome'_eq1_m = e(b)
+			scalar `outcome'_eq1_m = `outcome'_eq1_m[1, 1]
+			
+			est restore `outcome'_eq1
+			margins, dydx(hev) post
+			est store `outcome'_eq1_ame
+			mat `outcome'_eq1_ame = e(b)
+			scalar `outcome'_eq1_ame = `outcome'_eq1_ame[1, 2]
+		
+			scalar `outcome'_eq1_ame_per = (scalar(`outcome'_eq1_ame) / scalar(`outcome'_eq1_m)) * 100
+		}	
+		local notes "Predicted change in probability of injury from HEV = 0 to HEV = 1, holding all other covariates at observed values (See Table 3 for full list of covariates). Std. errors clustered at accident level.  "
+wordwrap "`notes'", l(120)
+
+	esttab ps_eq1_m ps_eq1_ame cs_eq1_m cs_eq1_ame psf_eq1_m psf_eq1_ame csf_eq1_m csf_eq1_ame using "table-eq1-ame.tex", booktabs replace ///
+	b(a2) ///
+	t(a2) ///
+	rename(_cons 1.hev) ///
+	substitute(1.hev "") ///
+		eq(1) ///
+		obslast ///
+		nobaselevels ///
+		noomitted ///
+		nonumbers ///
+		eqlabels(none) ///
+		mtitles("Prob." "AME" "Prob." "AME" "Prob" "AME" "Prob" "AME") ///
+		mgroups("PS" "CS" "PSF" "CSF", pattern(1 0 1 0 1 0 1 0) span prefix(\multicolumn{@span}{c}{) suffix(})) ///
+		title("AME of HEV by Injury Outcome\label{table-eq1-ame}") ///
+		width(1\hsize) 
+
+```
+
+Table \ref{table-eq1-ame} reports the average marginal effects (AMEs) of HEV for all four outcomes. 
+AMEs measure the change in probability of each outcome (injury) when $hev$ from Eq.(\ref{eq1}) 
+changes from 0 to 1, while holding all other covariates at observed values. 
+Using the probability metric requires conditioning on the value of all covariates, 
+not just the interaction term. 
+
+HEV is estimated to increase the probability of a PS and CS by `s %3.2f scalar(ps_eq1_ame) * 100` and
+`s %3.2f scalar(cs_eq1_ame) * 100` percentage points, respectively (p < 0.001). When expressed as 
+a percent, HEV is associated with a 
+`s %3.2f scalar(ps_eq1_ame_per)`% change in the predicted probability of PS and a 
+`s %3.2f scalar(cs_eq1_ame_per)`% change in the predicted probability of CS. The effect of HEV is not precisely estimated in the PSF and CSF equations.
+
+\input{table-eq1-ame.tex}
+
+
+
+
+
+## 2.2 Effects over speed limit
+
+```{s/}
+qui {
+	set graphics off
+	
+	
+	foreach outcome in ps cs psf csf {
+			logistic `outcome' i.hev##i.speed_limit ///
+			i.weather_conditions ///
+			i.season ///
+			i.road_type ///
+			i.vehicle_maneuver ///
+			i.driver_age ///
+			i.daylight ///
+			i.dry_road ///
+			i.weekday ///
+			i.weekend /// 
+			i.weekend_night ///
+			i.carriageway_hazards ///
+			i.crosswalk ///
+			i.ped_human_control /// 
+			i.special_conditions /// 
+			i.taxi ///
+			i.police_attended_scene ///
+			drvsf_per ///
+			i.year ///
+			, ///
+			vce(cluster accident_index)
+			
+			est store `outcome'_eq1
+			
+			margins, over(speed_limit) post 
+			est store `outcome'_eq1_mos
+			mat `outcome'_eq1_mos = e(b)
+
+			est restore `outcome'_eq1
+			margins, dydx(hev) over(speed_limit) post 
+			est store `outcome'_eq1_ameos
+			mat `outcome'_eq1_ameos = e(b)
+			
+		}
+
+local notes "Predicted change in probability of injury from HEV = 0 to HEV = 1 conditional on speed limit, holding all other covariates at observed values (See Table 3 for full list of covariates). Std. errors adjusted for multiple comparisons using Bonferroni and clustered at accident level."
+wordwrap "`notes'", l(90)
+
+esttab ps_eq1_mos ps_eq1_ameos cs_eq1_mos cs_eq1_ameos psf_eq1_mos psf_eq1_ameos csf_eq1_mos csf_eq1_ameos using "table-eq1-ameos.tex", booktabs replace ///
+eq("speed_limit_label" = 1:2:1:2:1:2:1:2) ///
+substitute(speed_limit_label "Speed") ///
+coeflabels(20.speed_limit "20" 30.speed_limit "30" 40.speed_limit "40" 50.speed_limit "50" 60.speed_limit "60" 70.speed_limit "70") ///
+obslast ///
+nobaselevels ///
+noomitted ///
+nonumbers ///
+sfmt(2) ///
+mtitles("Prob." "AME" "Prob." "AME" "Prob" "AME" "Prob" "AME") ///
+mgroups("PS" "CS" "PSF" "CSF", pattern(1 0 1 0 1 0 1 0) span prefix(\multicolumn{@span}{c}{) suffix(})) ///
+title("AME of HEV Conditional on Speed Limit by Injury Outcome\label{table-eq1-ameos}") ///
+width(1\hsize) 
+
+// Graph AMEs conditional on speed limit
+coefplot ///
+ps_eq1_ameos cs_eq1_ameos psf_eq1_ameos csf_eq1_ameos, ///
+xline(0) ///
+ytitle("Speed (mph)", size(small)) xtitle("AME", size(small)) ///
+ylabel(, labsize(small)) ///
+coeflabels(*20* = "20" *30* = "30" *40* = "40" *50* = "50" *60* = "60" *70* = "70") ///
+legend(label(2 "PS") label(4 "CS") label(6 "PSF") label(8 "CSF") ring(0) position(4))
+
+graph export "graphs/figure-eq1-ameos.pdf", replace
+}
+```
+
+Table \ref{table-eq1-ameos} reports AMEs of HEV over speed limit for all four outcomes.
+When the posted speed limit is 20 MPH, HEV is estimated to increase the probability 
+of PS & CS by `s %3.2f ps_eq1_ameos[1, 7] * 100` and `s %3.2f cs_eq1_ameos[1, 7] * 100`
+precentage points, respectively (p < 0.001). This translates to a 
+`s %3.2f ps_eq1_ameos[1, 7] / ps_eq1_mos[1, 1] * 100`% increase in the probablity of PS and a
+`s %3.2f cs_eq1_ameos[1, 7] / cs_eq1_mos[1, 1] * 100`% increase in the probability of CS. 
+
+While the AMEs at 30 and 40 MPH are smaller in magnitude, when expressed in percentage terms the 
+estimated effect of HEV is even larger for PS. The same is true for CS when moving from 20 to 30 MPH. 
+Between 50 and 70 MPH there is no significant effect on PS, while for CS the model estimates
+a large and significant increase in CS at 60MPH but not 30, 40, or 70MPH.
+
+These results are generally consistent with the hypothesis that the effect of HEVs should depend 
+on the speed in which the vehicle is traveling, with the exception of the estimate for CS at 60MPH. 
+At higher speeds, there should be no appreciable increase in the risk to
+P & C. 
+
+Figure \ref{figure-eq1-ameos} depicts the change in AMEs for PS & CS over different speed zones. 
+For both PS & CS, the AMEs of HEV decrease with speed.
+
+\input{table-eq1-ameos.tex}
+
+
+![AME of HEV Conditional on Speed Limit by Injury Outcome](graphs/figure-eq1-ameos.pdf){#figure-eq1-ameos width="100%" .img-responsive .center-block}
+
+While estimates for PS & CS are 
+statistically significant at conventional levels, PSF & CSF are less precisely estimated.
+At every speed limit, the 95% confidence interval for the AME of HEV includes 0.  
+
+
+\newpage
+
+References
+---
