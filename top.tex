@@ -1,8 +1,10 @@
-\begin{table}[htbp]
-\caption{#}
-\label{#}
 \begin{center}
-\footnotesize
 \newcolumntype{Y}{>{\raggedleft\arraybackslash}X}
-\begin{tabularx} {\textwidth} {@{} l Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y@{}} \\
+{\renewcommand{\arraystretch}{0.5}%
+\begin{tabularx} {\textwidth} {@{} l Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y@{}} 
+\caption{\label{#} #} \par \\
 \toprule
+\endfirsthead
+\caption{\label{#} #} \par \\
+\toprule
+\endhead

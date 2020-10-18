@@ -3,3 +3,10 @@ graphs/*
 log/*
 manuscripts/*
 tables/*
+manuscript.tex
+*.pdf
+manuscript.smcl
+manuscript.log
+manuscript.do
+manuscript.aux
+texput.log

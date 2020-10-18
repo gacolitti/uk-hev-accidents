@@ -15,6 +15,10 @@ wget options meaning:
 
 */
 
+// Change working directory
+global master_dir "/Users/Gio/Documents/stata/uk-hev-accidents/"
+cd $master_dir
+
 // Download road safety data
 local toget "https://data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data/"
 local dest "data/road-safety"
@@ -22,10 +26,12 @@ capture noisily mkdir "`dest'"
 shell /usr/local/bin/wget -r -l1 -H -t1 -nd -N -np -A.zip -erobots=off `toget' -P `dest' --no-check-certificate
 
 // Get 2018 data
+local toget "https://data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data/"
+local dest "data/road-safety"
 shell /usr/local/bin/wget -r -l1 -H -t1 -nd -N -np -A.csv -erobots=off `toget' -P `dest' --no-check-certificate
 
 // local dest "data/road-safety"
-
+local dest "data/road-safety"
 cd "`dest'"
 local files : dir . files "*.zip"
 foreach file of local files {
@@ -70,6 +76,15 @@ shell /usr/local/bin/rename -f 's/([a-z])([0-9])/$1-$2/g' *
 shell /usr/local/bin/rename -f 's/_/-/g' *
 shell /usr/local/bin/rename -f 's/casualty/casualties/' *
 
+// Rename 2019 files
+shell /usr/local/bin/rename -f 's/ /-/g' *
+shell /usr/local/bin/rename -f 's/road-safety-data---//' *
+shell /usr/local/bin/rename -f 's/road-safety-data--//' *
+
+
+shell /usr/local/bin/rename -f 's/_/-/g' *
+
+
 local files : dir . files "bloodalcoholcontent-coronersdata*"
 foreach file of local files {
 	rm "`file'"
@@ -80,7 +95,7 @@ foreach file of local files {
 	rm "`file'"
 }
 
-rm "final dft casualties dashboard (2011 to 2015).xlsm"
+rm "final-dft-casualties-dashboard-(2011-to-2015).xlsm"
 
 // Remove unneeded year files 2009-2014 
 local files : dir . files "*"
@@ -90,7 +105,7 @@ foreach file of local files {
 	}
 }
 
-cd "$master_dir"
+cd $master_dir
 
 // Download vehicle license data
 local dest "data/vehicle-license"
@@ -112,3 +127,5 @@ local files : dir . files "*.ods"
 foreach file of local files {
 	rm "`file'"
 }
+
+cd $master_dir

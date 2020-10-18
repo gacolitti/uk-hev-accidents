@@ -1,6 +1,6 @@
 
 // Clean Ultra-Low Emissions Vehicles Licensed End-of-Quarter
-import excel "data/vehicle-license/veh0130.xlsx", sheet("VEH0130") cellrange(A7:U44) firstrow ///
+import excel "data/vehicle-license/veh0130.xlsx", sheet("VEH0130") cellrange(A7:U50) firstrow ///
 case(lower) clear
 drop in 1
 replace quarter = "2010 Q1" in 1
@@ -105,8 +105,10 @@ cd "../.."
 replace accident_index = Acc_Index if mi(accident_index)
 replace accident_index = Accident_Index if mi(accident_index)
 drop Acc_Index Accident_Index _csvfile
+save "data/road-safety/vehicles.dta", replace
 
 // Merge accidents, casualties, vehicles files
+use "data/road-safety/vehicles.dta", clear
 merge m:1 accident_index using "data/road-safety/accidents.dta", nogenerate
 merge 1:1 accident_index vehicle_reference using "data/road-safety/casualties.dta", nogenerate 
 
@@ -135,7 +137,7 @@ gen year_month = mofd(date)
 mvdecode _all , mv(-1)  
 
 // Apply value labels
-do "do-files/data-cleaning/apply-value-labels.do"
+do "apply-value-labels.do"
 
 
 ***************************************************************************************************

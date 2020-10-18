@@ -8,14 +8,13 @@ author: Giovanni Colitti
 abstract: |
 	Not available
 keywords: | 
-	hybrid, electric, pedestrian, cyclist, safety, transport.
+	hybrid, electric, pedestrian, cyclist, safety, transport, accident.
 bibliography: bibliography.bib
 ---
 
 ```{s/}
 qui {
-	global master_dir "~/Documents/stata/uk-hev-accidents"
-	cd "$master_dir"
+	cd "/Users/Gio/Documents/stata/uk-hev-accidents/"
 	use "data/cleaned-data.dta" , clear
 	sample 100
 	set scheme plotplain
@@ -122,48 +121,57 @@ foreach x in `varlist' {
 
 restore
 
-tabout year hev if `miss' == 0 using "hev-freq-by-year.tex", replace ///
-c(freq col) f(0c 1) style(tex) ///
-title(Two-way Frequency Between HEV and Year) ///
-twidth(16) ///
-caplab(hev-freq-by-year) ///
+tabout year hev if `miss' == 0 using "tables/hev-freq-by-year.tex", replace ///
+c(freq col) ///
+f(0c 1) ///
+style(tex) ///
 font(bold) ///
-doctype(report)
+doctype(report) ///
+topf(top.tex) ///
+topstr(tab:hev-freq-by-year|Two-way Frequency Between HEV and Year|tab:hev-freq-by-year|Two-way Frequency Between HEV and Year (continued)) ///
+botf(bot.tex) ///
+ntc // no table code (remove original code at top and bottom of table)
 
-tabout ps cs psf csf hev if `miss' == 0 using "outcome-freq-by-hev.tex", replace /// 
-c(freq col) f(0c 1) style(tex)  ///
- title(Two-way Frequency Between HEV and Injury Outcomes) ///
- twidth(16) ///
- caplab(outcome-freq-by-hev)  ///
- font(bold) ///
- doctype(report)
+tabout ps cs psf csf hev if `miss' == 0 using "tables/outcome-freq-by-hev.tex", replace /// 
+c(freq col) /// 
+f(0c 1) /// 
+	style(tex)  ///
+	font(bold) ///
+	doctype(report) ///
+	topf(top.tex) ///
+topstr(tab:outcome-freq-by-hev|Two-way Frequency Between HEV and Injury Outcomes|tab:outcome-freq-by-hev|Two-way Frequency Between HEV and Injury Outcomes (continued)) ///
+botf(bot.tex) ///
+ntc // no table code (remove original code at top and bottom of table)
  
 local cat_vars "speed_limit urban daylight weekday weekend weekend_night carriageway_hazards crosswalk special_conditions taxi police_attended_scene vehicle_maneuver road_type weather_conditions season"
 local cont_vars "ulev_per drvsf_per "
 
 // Summary of Control Variables
- tabout `cat_vars' hev if `miss' == 0 using "summary-of-controls.tex", replace /// 
+ tabout `cat_vars' hev if `miss' == 0 using "tables/summary-of-controls.tex", replace /// 
  f(0c 1) ///
  c(freq col) ///
  style(tex)  ///
- title(Two-way Frequency Between HEV and Control Variables) ///
  twidth(16) ///
- caplab(summary-of-controls)  ///
  font(bold) ///
- doctype(report)
+ doctype(report) ///
+ topf(top.tex) ///
+ topstr(tab:summary-of-controls|Two-way Frequency Between HEV and Control Variables|tab:summary-of-controls|Two-way Frequency Between HEV and Control Variables (continued)) ///
+ botf(bot.tex) ///
+ ntc // no table code (remove original code at top and bottom of table)
  
- tabout hev if `miss' == 0 using "summary-of-continuous-controls.tex", replace /// 
+ tabout hev if `miss' == 0 using "tables/summary-of-continuous-controls.tex", replace /// 
  f(2) ///
  sum ///
  c(mean drvsf_per sd drvsf_per min drvsf_per max drvsf_per mean ulev_per sd ulev_per min ulev_per max ulev_per) ///
  style(tex)  ///
- title(Summary of Continuous Control Variables by HEV) ///
- twidth(16) ///
- caplab(summary-of-continuous-controls)  ///
  font(bold) ///
  doctype(report) ///
  clab(Mean SD Min Max Mean SD Min Max) h2c(4 4) ///
- h2(Driver_Severe/Fatal_Injury_(%) Ultra-Low_Emission_Vehicle_(%))
+ h2(Driver_Severe/Fatal_Injury_(%) Ultra-Low_Emission_Vehicle_(%)) ///
+  topf(top.tex) ///
+ topstr(tab:summary-of-continuous-controls|Summary of Continuous Control Variables by HEV|tab:summary-of-continuous-controls|Summary of Continuous Control Variables by HEV (continued)) ///
+ botf(bot.tex) ///
+ ntc // no table code (remove original code at top and bottom of table)
 
  
 }
@@ -197,7 +205,7 @@ for most analyses, and is equal to 1 if a vehicle is either hybrid electric or f
 Table \ref{tab:hev-freq-by-year} lists the frequency of HEVs involved in a personal injury accident
 between `s `year_min'` and `s `year_max'`. 
 
-\input{hev-freq-by-year.tex}
+\input{tables/hev-freq-by-year.tex}
 
 The four interactions of injured party and injury-type represent our outcome variables. 
 Pedestrian slight (PS), pedestrian serious or fatal (PSF), cyclist slight (CS), and cyclist
@@ -205,13 +213,13 @@ serious or fatal (CSF) are indicator variables equal to 1 if an injury was susta
 individual belonging to that group (person type/injury type). The two-way frequency of these
 outcome variables and HEV is presented in Table \ref{tab:outcome-freq-by-hev}.
 
-\input{outcome-freq-by-hev.tex}
+\input{tables/outcome-freq-by-hev.tex}
 
 The remaining variables are used to control for other circumstances surrounding the accident that
 might be correlated with both the outcome variable and HEV. A summary of these control variables is
-presented in Table \ref{summary-of-controls} and Table \ref{summary-of-continuous-controls.tex}. 
+presented in Table \ref{tab:summary-of-controls} and Table \ref{tab:summary-of-continuous-controls}. 
 
-\input{summary-of-controls.tex}
+\input{tables/summary-of-controls.tex}
 
 Speed limit is the posted speed limit where the accident occurred. (footnote about censored speed
 limit) Vehicle maneuver describes the action of the vehicle; either reversing, parked, waiting to
@@ -238,7 +246,7 @@ the road. Moreover, insofar as year dummies are insufficient in capturing the gr
 because, for example, the growth in ULEV stock varies by district and quarter, ULEV % is a necessary
 control. ULEV % varies by district and quarter, but is only available for years 2010-`s `year_max'`.
 
-\input{summary-of-continuous-controls.tex}
+\input{tables/summary-of-continuous-controls.tex}
 	
 Of the control variables, perhaps most important are urban and speed limit. HEV accidents are likely
 positively correlated with urban and negatively correlated with speed limit given the range
@@ -307,7 +315,7 @@ $hev*speed$ is a vector of interactions between HEV and speed limit dummies to a
 conditional on speed; $X$ is a matrix of variables that control for urbanization, weather
 conditions, unobserved innovations in safety features over time, vehicle maneuver at the time of
 the accident, and other variables that might be correlated with both $hev$ and the outcome.
-(For a full list of the variables included in the model, see Table \ref{summary-of-controls}).
+(For a full list of the variables included in the model, see Table \ref{tab:summary-of-controls}).
 Lastly, $year$ is a vector of year dummies and $\epsilon$ is a vector of residuals.
 Because vehicles are not independently sampled, standard errors are clustered at the
 accident level. 
@@ -360,7 +368,7 @@ qui {
 		local notes "Predicted change in probability of injury from HEV = 0 to HEV = 1, holding all other covariates at observed values (See Table 3 for full list of covariates). Std. errors clustered at accident level.  "
 wordwrap "`notes'", l(120)
 
-	esttab ps_eq1_m ps_eq1_ame cs_eq1_m cs_eq1_ame psf_eq1_m psf_eq1_ame csf_eq1_m csf_eq1_ame using "table-eq1-ame.tex", booktabs replace ///
+	esttab ps_eq1_m ps_eq1_ame cs_eq1_m cs_eq1_ame psf_eq1_m psf_eq1_ame csf_eq1_m csf_eq1_ame using "tables/eq1-ame.tex", booktabs replace ///
 	b(a2) ///
 	t(a2) ///
 	rename(_cons 1.hev) ///
@@ -373,12 +381,12 @@ wordwrap "`notes'", l(120)
 		eqlabels(none) ///
 		mtitles("Prob." "AME" "Prob." "AME" "Prob" "AME" "Prob" "AME") ///
 		mgroups("PS" "CS" "PSF" "CSF", pattern(1 0 1 0 1 0 1 0) span prefix(\multicolumn{@span}{c}{) suffix(})) ///
-		title("AME of HEV by Injury Outcome\label{table-eq1-ame}") ///
+		title("AME of HEV by Injury Outcome\label{tab:eq1-ame}") ///
 		width(1\hsize) 
-
+}
 ```
 
-Table \ref{table-eq1-ame} reports the average marginal effects (AMEs) of HEV for all four outcomes. 
+Table \ref{tab:eq1-ame} reports the average marginal effects (AMEs) of HEV for all four outcomes. 
 AMEs measure the change in probability of each outcome (injury) when $hev$ from Eq.(\ref{eq1}) 
 changes from 0 to 1, while holding all other covariates at observed values. 
 Using the probability metric requires conditioning on the value of all covariates, 
@@ -390,7 +398,7 @@ a percent, HEV is associated with a
 `s %3.2f scalar(ps_eq1_ame_per)`% change in the predicted probability of PS and a 
 `s %3.2f scalar(cs_eq1_ame_per)`% change in the predicted probability of CS. The effect of HEV is not precisely estimated in the PSF and CSF equations.
 
-\input{table-eq1-ame.tex}
+\input{tables/eq1-ame.tex}
 
 
 
@@ -442,7 +450,7 @@ qui {
 local notes "Predicted change in probability of injury from HEV = 0 to HEV = 1 conditional on speed limit, holding all other covariates at observed values (See Table 3 for full list of covariates). Std. errors adjusted for multiple comparisons using Bonferroni and clustered at accident level."
 wordwrap "`notes'", l(90)
 
-esttab ps_eq1_mos ps_eq1_ameos cs_eq1_mos cs_eq1_ameos psf_eq1_mos psf_eq1_ameos csf_eq1_mos csf_eq1_ameos using "table-eq1-ameos.tex", booktabs replace ///
+esttab ps_eq1_mos ps_eq1_ameos cs_eq1_mos cs_eq1_ameos psf_eq1_mos psf_eq1_ameos csf_eq1_mos csf_eq1_ameos using "tables/eq1-ameos.tex", booktabs replace ///
 eq("speed_limit_label" = 1:2:1:2:1:2:1:2) ///
 substitute(speed_limit_label "Speed") ///
 coeflabels(20.speed_limit "20" 30.speed_limit "30" 40.speed_limit "40" 50.speed_limit "50" 60.speed_limit "60" 70.speed_limit "70") ///
@@ -453,7 +461,7 @@ nonumbers ///
 sfmt(2) ///
 mtitles("Prob." "AME" "Prob." "AME" "Prob" "AME" "Prob" "AME") ///
 mgroups("PS" "CS" "PSF" "CSF", pattern(1 0 1 0 1 0 1 0) span prefix(\multicolumn{@span}{c}{) suffix(})) ///
-title("AME of HEV Conditional on Speed Limit by Injury Outcome\label{table-eq1-ameos}") ///
+title("AME of HEV Conditional on Speed Limit by Injury Outcome\label{tab:eq1-ameos}") ///
 width(1\hsize) 
 
 // Graph AMEs conditional on speed limit
@@ -465,38 +473,42 @@ ylabel(, labsize(small)) ///
 coeflabels(*20* = "20" *30* = "30" *40* = "40" *50* = "50" *60* = "60" *70* = "70") ///
 legend(label(2 "PS") label(4 "CS") label(6 "PSF") label(8 "CSF") ring(0) position(4))
 
-graph export "graphs/figure-eq1-ameos.pdf", replace
+graph export "graphs/eq1-ameos.pdf", replace
 }
 ```
 
-Table \ref{table-eq1-ameos} reports AMEs of HEV over speed limit for all four outcomes.
+Table \ref{tab:eq1-ameos} reports AMEs of HEV over speed limit for all four outcomes.
 When the posted speed limit is 20 MPH, HEV is estimated to increase the probability 
 of PS & CS by `s %3.2f ps_eq1_ameos[1, 7] * 100` and `s %3.2f cs_eq1_ameos[1, 7] * 100`
 precentage points, respectively (p < 0.001). This translates to a 
 `s %3.2f ps_eq1_ameos[1, 7] / ps_eq1_mos[1, 1] * 100`% increase in the probablity of PS and a
 `s %3.2f cs_eq1_ameos[1, 7] / cs_eq1_mos[1, 1] * 100`% increase in the probability of CS. 
 
-While the AMEs at 30 and 40 MPH are smaller in magnitude, when expressed in percentage terms the 
-estimated effect of HEV is even larger for PS. The same is true for CS when moving from 20 to 30 MPH. 
+The AMEs at 30 and 40 mph are smaller in magnitude for PS and CS. 
 Between 50 and 70 MPH there is no significant effect on PS, while for CS the model estimates
-a large and significant increase in CS at 60MPH but not 30, 40, or 70MPH.
+a large and significant increase in CS at 60 mph but not 40 or 70 mph.
 
 These results are generally consistent with the hypothesis that the effect of HEVs should depend 
-on the speed in which the vehicle is traveling, with the exception of the estimate for CS at 60MPH. 
-At higher speeds, there should be no appreciable increase in the risk to
+on the speed in which the vehicle is traveling, with the exception of the estimate for CS at 60 mph; 
+at higher speeds there should be no appreciable increase in the risk to
 P & C. 
 
-Figure \ref{figure-eq1-ameos} depicts the change in AMEs for PS & CS over different speed zones. 
+While estimates for PS & CS are 
+statistically significant at conventional levels for lower speed zones, PSF & CSF are less precisely estimated.
+At every speed limit, the 95% confidence interval for the AME of HEV includes 0.  
+
+Figure \ref{figure-eq1-ameos} depicts the change in AMEs by outcome and speed zone.
 For both PS & CS, the AMEs of HEV decrease with speed.
 
-\input{table-eq1-ameos.tex}
+\input{tables/eq1-ameos.tex}
 
 
-![AME of HEV Conditional on Speed Limit by Injury Outcome](graphs/figure-eq1-ameos.pdf){#figure-eq1-ameos width="100%" .img-responsive .center-block}
+![AME of HEV Conditional on Speed Limit by Injury Outcome](graphs/eq1-ameos.pdf){#figure-eq1-ameos width="100%" .img-responsive .center-block}
 
-While estimates for PS & CS are 
-statistically significant at conventional levels, PSF & CSF are less precisely estimated.
-At every speed limit, the 95% confidence interval for the AME of HEV includes 0.  
+
+## 2.3 Effects Over Time
+
+
 
 
 \newpage
